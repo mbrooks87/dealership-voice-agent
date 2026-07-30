@@ -1,0 +1,110 @@
+{
+  "_readme": "Tool definitions for the Vapi assistant. In the dashboard, add each as a Custom Tool (type: function) and set the Server URL of each to https://YOUR-APP.up.railway.app/vapi/tools with your webhook secret. Or pass this array as `model.tools` via the Vapi API.",
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "check_inventory",
+        "description": "Search the dealership's live vehicle inventory. Returns up to 3 matches summarized for speech, with stock numbers. Use whenever the caller asks what's available.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "make": { "type": "string", "description": "Vehicle make, e.g. Kia" },
+            "model": { "type": "string", "description": "Model name, e.g. Telluride, Sportage, EV6" },
+            "year": { "type": "number", "description": "Model year" },
+            "trim": { "type": "string", "description": "Trim level, e.g. SX Prestige, GT-Line" },
+            "maxPrice": { "type": "number", "description": "Caller's stated budget ceiling in dollars. Used only to filter — never state prices." },
+            "bodyStyle": { "type": "string", "description": "SUV, sedan, or minivan" },
+            "condition": { "type": "string", "description": "new or used" }
+          }
+        }
+      },
+      "server": { "url": "https://YOUR-APP.up.railway.app/vapi/tools" }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "get_vehicle_details",
+        "description": "Get full details for one specific vehicle by stock number or VIN: trim, mileage, colors, key features, and availability status.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "stockNumber": { "type": "string", "description": "Dealership stock number, e.g. K2501" },
+            "vin": { "type": "string", "description": "17-character VIN" }
+          }
+        }
+      },
+      "server": { "url": "https://YOUR-APP.up.railway.app/vapi/tools" }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "create_service_request",
+        "description": "Log a service appointment request after collecting all required details. The service team confirms the final time.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string", "description": "Caller's full name" },
+            "phone": { "type": "string", "description": "Caller's phone number" },
+            "vehicleYearMakeModel": { "type": "string", "description": "e.g. 2022 Kia Telluride" },
+            "serviceType": { "type": "string", "description": "e.g. oil change, tire rotation, recall" },
+            "preferredWindow": { "type": "string", "description": "Preferred day and time window, e.g. Thursday morning" },
+            "notes": { "type": "string", "description": "Anything else relevant" }
+          },
+          "required": ["name", "phone", "vehicleYearMakeModel", "serviceType", "preferredWindow"]
+        }
+      },
+      "server": { "url": "https://YOUR-APP.up.railway.app/vapi/tools" }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "create_sales_lead",
+        "description": "Log a sales lead after collecting the caller's details. A product specialist follows up.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string", "description": "Caller's full name" },
+            "phone": { "type": "string", "description": "Caller's phone number" },
+            "interest": { "type": "string", "description": "What they're shopping for" },
+            "timeframe": { "type": "string", "description": "When they plan to buy, e.g. this weekend, next month" },
+            "tradeIn": { "type": "string", "description": "Their current vehicle if trading in" },
+            "notes": { "type": "string", "description": "Budget signals or anything else relevant. Never quote prices back." }
+          },
+          "required": ["name", "phone", "interest", "timeframe"]
+        }
+      },
+      "server": { "url": "https://YOUR-APP.up.railway.app/vapi/tools" }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "get_hours_and_location",
+        "description": "Get department hours, the dealership address, and directions.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "department": { "type": "string", "description": "sales, service, or parts. Omit for all departments." }
+          }
+        }
+      },
+      "server": { "url": "https://YOUR-APP.up.railway.app/vapi/tools" }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "transfer_to_human",
+        "description": "Get the right department's transfer number when the caller needs a human: pricing/financing/trade value questions, frustration, requests for a person, legal or complaint language, or repeated misunderstanding.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "department": { "type": "string", "description": "sales, service, or parts" },
+            "reason": { "type": "string", "description": "Why the caller is being transferred" }
+          },
+          "required": ["department"]
+        }
+      },
+      "server": { "url": "https://YOUR-APP.up.railway.app/vapi/tools" }
+    }
+  ]
+}
