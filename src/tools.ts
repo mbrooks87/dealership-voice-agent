@@ -9,14 +9,52 @@ import { logLead } from "./leads.js";
 
 function speakVehicle(v: Vehicle): string {
   const availability =
-    v.status === "in_stock"
-      ? "on the lot now"
+    v.status === "sold_pending"
+      ? "sale pending"
       : v.status === "in_transit"
         ? "arriving soon"
-        : "sale pending";
+        : "on the lot now";
   const mileage =
     v.condition === "used" ? `${Math.round(v.mileage / 1000)} thousand miles, ` : "";
   return `a ${v.year} ${v.model} ${v.trim} in ${v.exteriorColor}, ${mileage}${availability}, stock number ${v.stockNumber}`;
+}
+
+// A caller can't absorb a 20-item feature dump. Pick the few that sell the
+// car out loud: powertrain character, comfort headliners, then tech/safety.
+const FEATURE_PRIORITY = [
+  "electric",
+  "hybrid",
+  "range",
+  "turbo",
+  "horsepower",
+  "all-wheel",
+  "captain",
+  "third row",
+  "seating",
+  "sunroof",
+  "panoramic",
+  "ventilated",
+  "heated",
+  "leather",
+  "audio",
+  "navigation",
+  "charging",
+  "tow",
+  "certified",
+  "one owner",
+];
+
+function pickFeatures(features: string[], max = 4): string[] {
+  const score = (f: string) => {
+    const i = FEATURE_PRIORITY.findIndex((k) => f.toLowerCase().includes(k));
+    return i === -1 ? FEATURE_PRIORITY.length : i;
+  };
+  return features
+    .map((f, i) => ({ f, i, s: score(f) }))
+    .sort((a, b) => a.s - b.s || a.i - b.i)
+    .slice(0, max)
+    .sort((a, b) => a.i - b.i)
+    .map((x) => x.f);
 }
 
 const checkInventorySchema = z.object({
@@ -92,12 +130,12 @@ export const handlers: Record<
       return "That stock number or VIN isn't in our current inventory records. Offer to take their information so a specialist can look it up and call them back.";
     }
     const availability =
-      v.status === "in_stock"
-        ? "It is on the lot and available right now."
+      v.status === "sold_pending"
+        ? "It has a sale pending — a specialist can confirm whether it is still available."
         : v.status === "in_transit"
           ? "It is in transit to the dealership — a specialist can confirm the arrival date."
-          : "It has a sale pending — a specialist can confirm whether it is still available.";
-    return `Stock ${v.stockNumber}: ${v.year} Kia ${v.model} ${v.trim}, ${v.condition}, ${v.exteriorColor} exterior with ${v.interiorColor} interior, ${v.mileage.toLocaleString()} miles. Key features: ${v.features.join(", ")}. ${availability}`;
+          : "It is on the lot and available right now.";
+    return `Stock ${v.stockNumber}: ${v.year} ${v.make} ${v.model} ${v.trim}, ${v.condition}, ${v.exteriorColor} exterior with ${v.interiorColor} interior, ${v.mileage.toLocaleString()} miles. Key features: ${pickFeatures(v.features).join(", ")}. ${availability}`;
   },
 
   async create_service_request(rawArgs, callId) {

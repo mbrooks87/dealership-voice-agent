@@ -14,8 +14,8 @@ const scenarios: Scenario[] = [
   { label: "Caller asks about Tellurides", tool: "check_inventory", args: { model: "Telluride" } },
   { label: "Used SUV under 30k", tool: "check_inventory", args: { condition: "used", bodyStyle: "SUV", maxPrice: 30000 } },
   { label: "Something we don't carry", tool: "check_inventory", args: { model: "Mustang" } },
-  { label: "Details on stock K2501", tool: "get_vehicle_details", args: { stockNumber: "K2501" } },
-  { label: "Details on a sold-pending unit", tool: "get_vehicle_details", args: { stockNumber: "K2512" } },
+  { label: "Details on stock K6412", tool: "get_vehicle_details", args: { stockNumber: "K6412" } },
+  { label: "Details on a sold-pending unit", tool: "get_vehicle_details", args: { stockNumber: "K6350" } },
   { label: "Bad stock number", tool: "get_vehicle_details", args: { stockNumber: "ZZZ999" } },
   {
     label: "Oil change appointment",

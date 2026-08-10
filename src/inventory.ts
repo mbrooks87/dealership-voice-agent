@@ -15,9 +15,25 @@ export interface Vehicle {
   exteriorColor: string;
   interiorColor: string;
   price: number;
-  status: "in_stock" | "in_transit" | "sold_pending";
+  // Old data files used in_stock/in_transit; the current file uses available.
+  status: "available" | "in_stock" | "in_transit" | "sold_pending";
   features: string[];
+  drivetrain?: string;
+  engine?: string;
+  transmission?: string;
+  mpg?: string;
+  seating?: number;
+  towingCapacity?: string;
+  warranty?: string;
+  range?: number;
+  chargingTime?: string;
+  certified?: boolean;
+  historyReport?: string;
 }
+
+// The data file has shipped in two shapes: a bare array with a `price` field,
+// and `{ "vehicles": [...] }` with `msrp`. Accept both.
+type RawVehicle = Omit<Vehicle, "price"> & { price?: number; msrp?: number };
 
 export interface SearchCriteria {
   make?: string;
@@ -36,7 +52,19 @@ const dataPath = path.join(
   "inventory.json"
 );
 
-const inventory: Vehicle[] = JSON.parse(readFileSync(dataPath, "utf-8"));
+const parsed = JSON.parse(readFileSync(dataPath, "utf-8")) as
+  | RawVehicle[]
+  | { vehicles: RawVehicle[] };
+const rawVehicles = Array.isArray(parsed) ? parsed : parsed.vehicles;
+if (!Array.isArray(rawVehicles)) {
+  throw new Error(
+    `inventory.json must be an array of vehicles or { "vehicles": [...] }`
+  );
+}
+const inventory: Vehicle[] = rawVehicles.map((v) => ({
+  ...v,
+  price: v.price ?? v.msrp ?? 0,
+}));
 
 const contains = (haystack: string, needle: string) =>
   haystack.toLowerCase().includes(needle.toLowerCase().trim());
