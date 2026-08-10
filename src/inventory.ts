@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 
@@ -45,12 +45,18 @@ export interface SearchCriteria {
   condition?: string;
 }
 
-const dataPath = path.join(
-  path.dirname(fileURLToPath(import.meta.url)),
-  "..",
-  "data",
-  "inventory.json"
-);
+// This module runs from src/ under tsx and from dist/src/ when compiled;
+// data/ lives at the project root either way, so probe both depths.
+const here = path.dirname(fileURLToPath(import.meta.url));
+const candidates = [
+  process.env.INVENTORY_PATH,
+  path.join(here, "..", "data", "inventory.json"),
+  path.join(here, "..", "..", "data", "inventory.json"),
+].filter((p): p is string => Boolean(p));
+const dataPath = candidates.find(existsSync);
+if (!dataPath) {
+  throw new Error(`inventory.json not found; looked in: ${candidates.join(", ")}`);
+}
 
 const parsed = JSON.parse(readFileSync(dataPath, "utf-8")) as
   | RawVehicle[]
