@@ -17,6 +17,19 @@ const scenarios: Scenario[] = [
   { label: "Details on stock K6412", tool: "get_vehicle_details", args: { stockNumber: "K6412" } },
   { label: "Details on a sold-pending unit", tool: "get_vehicle_details", args: { stockNumber: "K6350" } },
   { label: "Bad stock number", tool: "get_vehicle_details", args: { stockNumber: "ZZZ999" } },
+  { label: "Features follow-up, no stock number (empty args)", tool: "get_vehicle_details", args: {} },
+  { label: "Features by model only", tool: "get_vehicle_details", args: { model: "Carnival", trim: "SX Prestige" } },
+  { label: "Features by ambiguous model", tool: "get_vehicle_details", args: { model: "Telluride" } },
+  {
+    label: "Test drive appointment",
+    tool: "create_appointment_request",
+    args: {
+      name: "Alicia Grant",
+      phone: "678-555-0119",
+      interest: "test drive the 2026 Telluride X-Pro, stock K6412",
+      preferredWindow: "Saturday morning",
+    },
+  },
   {
     label: "Oil change appointment",
     tool: "create_service_request",

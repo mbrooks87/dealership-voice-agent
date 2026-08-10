@@ -1,12 +1,23 @@
+import { existsSync } from "node:fs";
 import { appendFile, mkdir } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 
-const dataDir = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "data");
+// Same dual-depth situation as inventory.ts: src/ under tsx, dist/src/ when
+// compiled. Anchor on inventory.json — a bare data/ dir isn't proof of the
+// project root, since compiled runs used to mkdir a stray dist/data/.
+const here = path.dirname(fileURLToPath(import.meta.url));
+const dataDirCandidates = [
+  path.join(here, "..", "data"),
+  path.join(here, "..", "..", "data"),
+];
+const dataDir =
+  dataDirCandidates.find((d) => existsSync(path.join(d, "inventory.json"))) ??
+  dataDirCandidates[0];
 const leadsFile = path.join(dataDir, "leads.jsonl");
 
 export interface LeadRecord {
-  type: "sales" | "service";
+  type: "sales" | "service" | "appointment";
   createdAt: string;
   callId?: string;
   payload: Record<string, unknown>;

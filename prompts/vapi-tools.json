@@ -25,13 +25,35 @@
       "type": "function",
       "function": {
         "name": "get_vehicle_details",
-        "description": "Get full details for one specific vehicle by stock number or VIN: trim, mileage, colors, key features, and availability status.",
+        "description": "Get full details for one specific vehicle: trim, mileage, colors, key features, and availability status. Use when the caller asks a follow-up about a vehicle, like what features it has. Prefer the stock number from your most recent check_inventory result (even if you didn't say it aloud); if you don't have one, pass the model the caller described.",
         "parameters": {
           "type": "object",
           "properties": {
-            "stockNumber": { "type": "string", "description": "Dealership stock number, e.g. K2501" },
-            "vin": { "type": "string", "description": "17-character VIN" }
+            "stockNumber": { "type": "string", "description": "Dealership stock number from a prior check_inventory result, e.g. K6412" },
+            "vin": { "type": "string", "description": "17-character VIN" },
+            "model": { "type": "string", "description": "Model name the caller described, e.g. Telluride — use when no stock number is known" },
+            "year": { "type": "number", "description": "Model year, if the caller mentioned one" },
+            "trim": { "type": "string", "description": "Trim level, if the caller mentioned one" }
           }
+        }
+      },
+      "server": { "url": "https://YOUR-APP.up.railway.app/vapi/tools" }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "create_appointment_request",
+        "description": "Log a request to come see a vehicle, take a test drive, or visit the showroom. A product specialist calls back to confirm the exact time.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string", "description": "Caller's full name" },
+            "phone": { "type": "string", "description": "Caller's phone number" },
+            "interest": { "type": "string", "description": "What they're coming in for, e.g. test drive the 2026 Telluride X-Pro, stock K6412" },
+            "preferredWindow": { "type": "string", "description": "Preferred day and time window, e.g. Saturday morning" },
+            "notes": { "type": "string", "description": "Anything else relevant. Never quote prices." }
+          },
+          "required": ["name", "phone", "interest", "preferredWindow"]
         }
       },
       "server": { "url": "https://YOUR-APP.up.railway.app/vapi/tools" }

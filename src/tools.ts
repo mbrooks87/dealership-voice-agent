@@ -67,20 +67,31 @@ const checkInventorySchema = z.object({
   condition: z.string().optional(),
 });
 
-const vehicleDetailsSchema = z
-  .object({
-    stockNumber: z.string().optional(),
-    vin: z.string().optional(),
-  })
-  .refine((a) => a.stockNumber || a.vin, {
-    message: "stockNumber or vin is required",
-  });
+// Callers almost never know stock numbers — accept a model/year/trim
+// description too, and never hard-fail on missing identifiers: this handler
+// gets called with empty args whenever a caller asks "what features does it
+// have," and the answer has to be spoken guidance, not a thrown error.
+const vehicleDetailsSchema = z.object({
+  stockNumber: z.string().optional(),
+  vin: z.string().optional(),
+  model: z.string().optional(),
+  year: z.coerce.number().int().optional(),
+  trim: z.string().optional(),
+});
 
 const serviceRequestSchema = z.object({
   name: z.string().min(1),
   phone: z.string().min(7),
   vehicleYearMakeModel: z.string().min(1),
   serviceType: z.string().min(1),
+  preferredWindow: z.string().min(1),
+  notes: z.string().optional(),
+});
+
+const appointmentRequestSchema = z.object({
+  name: z.string().min(1),
+  phone: z.string().min(7),
+  interest: z.string().min(1),
   preferredWindow: z.string().min(1),
   notes: z.string().optional(),
 });
@@ -125,9 +136,24 @@ export const handlers: Record<
 
   async get_vehicle_details(rawArgs) {
     const args = vehicleDetailsSchema.parse(rawArgs ?? {});
-    const v = getByStockOrVin(args.stockNumber ?? args.vin ?? "");
+    let v =
+      args.stockNumber || args.vin
+        ? getByStockOrVin(args.stockNumber ?? args.vin ?? "")
+        : undefined;
+    if (!v && (args.model || args.trim || args.year)) {
+      const matches = search({ model: args.model, trim: args.trim, year: args.year });
+      if (matches.length === 1) {
+        v = matches[0];
+      } else if (matches.length > 1) {
+        const top = matches.slice(0, 3);
+        return `That description matches ${matches.length} vehicles: ${top.map(speakVehicle).join("; ")}. Ask the caller which one they mean, then call this tool again with its stock number.`;
+      }
+    }
     if (!v) {
-      return "That stock number or VIN isn't in our current inventory records. Offer to take their information so a specialist can look it up and call them back.";
+      if (args.stockNumber || args.vin || args.model || args.trim || args.year) {
+        return "That vehicle isn't in our current inventory records. Offer to take their information so a specialist can look it up and call them back.";
+      }
+      return "Need to know which vehicle the caller means. Use the stock number from your last inventory search, or ask which model they're interested in, then call this tool again.";
     }
     const availability =
       v.status === "sold_pending"
@@ -142,6 +168,12 @@ export const handlers: Record<
     const args = serviceRequestSchema.parse(rawArgs);
     await logLead("service", args, callId);
     return `Service request logged for ${args.name}: ${args.serviceType} on their ${args.vehicleYearMakeModel}, preferred ${args.preferredWindow}. Tell the caller the service team will confirm the exact appointment time, and read their phone number ${args.phone} back to them to confirm it.`;
+  },
+
+  async create_appointment_request(rawArgs, callId) {
+    const args = appointmentRequestSchema.parse(rawArgs);
+    await logLead("appointment", args, callId);
+    return `Appointment request logged for ${args.name}: ${args.interest}, preferred ${args.preferredWindow}. Tell the caller a product specialist will call to confirm the exact time, and read their phone number ${args.phone} back to them to confirm it.`;
   },
 
   async create_sales_lead(rawArgs, callId) {
